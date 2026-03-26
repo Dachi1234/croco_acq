@@ -267,7 +267,7 @@ export default async function HomePage({
                 <Link
                   key={post.slug}
                   href={`/${validLocale}/blog/${post.slug}`}
-                  className="flex h-full flex-col overflow-hidden rounded-[20px] border border-[#072c38] bg-[#001e28] shadow-[0px_4px_30px_0px_rgba(0,0,0,0.16)]"
+                  className="flex h-full flex-col overflow-hidden rounded-[20px] border border-[#072c38] bg-[#001e28] shadow-[0px_4px_30px_0px_rgba(0,0,0,0.16)] transition-all duration-200 hover:border-[rgba(0,146,192,0.35)] hover:shadow-[0px_8px_40px_0px_rgba(0,146,192,0.1)]"
                 >
                   <div className="relative h-[142px] shrink-0 overflow-hidden">
                     {post.cover_image ? (
@@ -307,7 +307,7 @@ export default async function HomePage({
                 <Link
                   key={post.slug}
                   href={`/${validLocale}/blog/${post.slug}`}
-                  className="flex min-w-[252px] flex-col overflow-hidden rounded-[20px] border border-[#072c38] bg-[#001e28] shadow-[0px_4px_30px_0px_rgba(0,0,0,0.16)]"
+                  className="flex min-w-[252px] flex-col overflow-hidden rounded-[20px] border border-[#072c38] bg-[#001e28] shadow-[0px_4px_30px_0px_rgba(0,0,0,0.16)] transition-all duration-200 hover:border-[rgba(0,146,192,0.35)] hover:shadow-[0px_8px_40px_0px_rgba(0,146,192,0.1)]"
                 >
                   <div className="relative h-[142px] shrink-0 overflow-hidden">
                     {post.cover_image ? (
