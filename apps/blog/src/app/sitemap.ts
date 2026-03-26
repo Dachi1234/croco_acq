@@ -1,0 +1,58 @@
+import type { MetadataRoute } from "next";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const locales = ["ka", "en"];
+  const entries: MetadataRoute.Sitemap = [];
+
+  // Static pages
+  for (const locale of locales) {
+    entries.push(
+      { url: `${SITE_URL}/${locale}`, lastModified: new Date(), changeFrequency: "daily", priority: 1.0 },
+      { url: `${SITE_URL}/${locale}/blog`, lastModified: new Date(), changeFrequency: "daily", priority: 0.8 },
+      { url: `${SITE_URL}/${locale}/promotions`, lastModified: new Date(), changeFrequency: "daily", priority: 0.8 },
+      { url: `${SITE_URL}/${locale}/privacy`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.3 },
+      { url: `${SITE_URL}/${locale}/terms`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.3 },
+    );
+  }
+
+  // Dynamic pages - articles
+  try {
+    for (const locale of locales) {
+      const res = await fetch(`${API_URL}/api/articles?locale=${locale}`);
+      if (res.ok) {
+        const articles: any[] = await res.json();
+        for (const article of articles) {
+          entries.push({
+            url: `${SITE_URL}/${locale}/blog/${article.slug}`,
+            lastModified: article.published_at ? new Date(article.published_at) : new Date(),
+            changeFrequency: "weekly",
+            priority: 0.7,
+          });
+        }
+      }
+    }
+  } catch {}
+
+  // Dynamic pages - promotions
+  try {
+    for (const locale of locales) {
+      const res = await fetch(`${API_URL}/api/promotions?locale=${locale}`);
+      if (res.ok) {
+        const promotions: any[] = await res.json();
+        for (const promo of promotions) {
+          entries.push({
+            url: `${SITE_URL}/${locale}/promotions/${promo.slug}`,
+            lastModified: promo.published_at ? new Date(promo.published_at) : new Date(),
+            changeFrequency: "weekly",
+            priority: 0.7,
+          });
+        }
+      }
+    }
+  } catch {}
+
+  return entries;
+}

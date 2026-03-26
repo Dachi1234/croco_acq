@@ -1,0 +1,23 @@
+{
+  "name": "acquisition",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev:server": "turbo run dev --filter=@acquisition/server",
+    "dev:admin": "turbo run dev --filter=@acquisition/admin",
+    "dev:blog": "turbo run dev --filter=@acquisition/blog",
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "db:generate": "drizzle-kit generate --config=drizzle.config.ts",
+    "db:migrate": "drizzle-kit migrate --config=drizzle.config.ts",
+    "db:studio": "drizzle-kit studio --config=drizzle.config.ts",
+    "db:seed": "node --env-file=.env --import=tsx/esm server/src/seed.ts",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.0",
+    "typescript": "^5.7.0",
+    "drizzle-kit": "^0.31.4"
+  }
+}

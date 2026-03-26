@@ -1,0 +1,56 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@font-face {
+  font-family: "Ubuntu";
+  src: url("/fonts/Ubuntu-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Ubuntu";
+  src: url("/fonts/Ubuntu-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Ubuntu MKH";
+  src: url("/fonts/Ubuntu-Regular-MKH.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --color-bg: #001a24;
+  --color-primary: #189541;
+  --color-border: #26c159;
+  --color-active: #1caf4b;
+  --color-header-bg: rgba(0, 30, 40, 0.85);
+  --color-header-border: #072c38;
+  --font-body: "Ubuntu", "Ubuntu MKH", sans-serif;
+  --font-medium: "Ubuntu", "Ubuntu MKH", sans-serif;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: #e8f4ec;
+  font-family: var(--font-body);
+  font-weight: 400;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
