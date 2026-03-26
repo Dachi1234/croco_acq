@@ -5,16 +5,35 @@ import { uploads } from "../db/schema.js";
 import { saveFile } from "../lib/upload.js";
 import { requireAuth } from "../middleware/auth.js";
 
+const ALLOWED_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "image/svg+xml",
+  "image/avif",
+  "application/pdf",
+]);
+
 export async function uploadsRoutes(app: FastifyInstance) {
-  app.post("/", { preHandler: requireAuth }, async (request, reply) => {
+  app.post("/", {
+    preHandler: requireAuth,
+    config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+  }, async (request, reply) => {
     const file = await request.file();
     if (!file) {
       return reply.code(400).send({ error: "No file uploaded" });
     }
 
+    const mimeType = file.mimetype ?? "application/octet-stream";
+    if (!ALLOWED_MIME_TYPES.has(mimeType)) {
+      return reply.code(400).send({
+        error: `File type not allowed: ${mimeType}. Allowed: ${[...ALLOWED_MIME_TYPES].join(", ")}`,
+      });
+    }
+
     const buffer = await file.toBuffer();
     const originalName = file.filename ?? "upload";
-    const mimeType = file.mimetype ?? "application/octet-stream";
 
     const saved = await saveFile(buffer, originalName, mimeType);
 

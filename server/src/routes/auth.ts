@@ -2,7 +2,14 @@ import type { FastifyInstance } from "fastify";
 import { auth } from "../lib/auth.js";
 
 export async function authRoutes(app: FastifyInstance) {
-  app.all("/*", async (request, reply) => {
+  app.all("/*", {
+    config: {
+      rateLimit: {
+        max: 10,
+        timeWindow: "1 minute",
+      },
+    },
+  }, async (request, reply) => {
     const url = new URL(
       request.url,
       `${request.protocol}://${request.hostname}`,

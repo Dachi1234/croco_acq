@@ -2,6 +2,7 @@ import { relations, sql } from "drizzle-orm";
 import {
   boolean,
   foreignKey,
+  index,
   integer,
   jsonb,
   pgTable,
@@ -32,6 +33,7 @@ function postColumns() {
     publishedAt: timestamp("published_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    deletedAt: timestamp("deleted_at"),
   };
 }
 
@@ -44,6 +46,9 @@ export const articles = pgTable(
       columns: [table.linkedTranslationId],
       foreignColumns: [table.id],
     }),
+    index("articles_locale_idx").on(table.locale),
+    index("articles_status_idx").on(table.status),
+    index("articles_published_at_idx").on(table.publishedAt),
   ],
 );
 
@@ -56,6 +61,9 @@ export const promotions = pgTable(
       columns: [table.linkedTranslationId],
       foreignColumns: [table.id],
     }),
+    index("promotions_locale_idx").on(table.locale),
+    index("promotions_status_idx").on(table.status),
+    index("promotions_published_at_idx").on(table.publishedAt),
   ],
 );
 

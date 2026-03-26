@@ -1,9 +1,10 @@
 import { db } from "../db/index.js";
 import { articles } from "../db/schema.js";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, isNull } from "drizzle-orm";
 import {
   createArticleSchema,
   updateArticleSchema,
+  LOCALES,
   type CreateArticle,
   type UpdateArticle,
 } from "@acquisition/shared";
@@ -104,9 +105,17 @@ function parseOptionalStatus(
 }
 
 export async function articlesRoutes(app: FastifyInstance) {
-  app.get("/", async (request) => {
+  app.get("/", async (request, reply) => {
     const { locale, status } = request.query as { locale?: string; status?: string };
-    const conditions = [];
+
+    if (locale && !(LOCALES as readonly string[]).includes(locale)) {
+      return reply.code(400).send({ error: `Invalid locale. Allowed: ${LOCALES.join(", ")}` });
+    }
+    if (status && !["draft", "published", "all"].includes(status)) {
+      return reply.code(400).send({ error: "Invalid status. Allowed: draft, published, all" });
+    }
+
+    const conditions = [isNull(articles.deletedAt)];
     if (status !== "all") {
       conditions.push(eq(articles.status, status === "draft" ? "draft" : "published"));
     }
@@ -137,11 +146,11 @@ export async function articlesRoutes(app: FastifyInstance) {
 
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(id);
     const [row] = isUuid
-      ? await db.select().from(articles).where(eq(articles.id, id))
+      ? await db.select().from(articles).where(and(eq(articles.id, id), isNull(articles.deletedAt)))
       : await db
           .select()
           .from(articles)
-          .where(and(eq(articles.slug, id), eq(articles.locale, locale)));
+          .where(and(eq(articles.slug, id), eq(articles.locale, locale), isNull(articles.deletedAt)));
 
     if (!row) {
       return reply.code(404).send({ error: "Not found" });
@@ -213,7 +222,11 @@ export async function articlesRoutes(app: FastifyInstance) {
     { preHandler: [requireAuth] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
-      const [deleted] = await db.delete(articles).where(eq(articles.id, id)).returning({ id: articles.id });
+      const [deleted] = await db
+        .update(articles)
+        .set({ deletedAt: new Date() })
+        .where(and(eq(articles.id, id), isNull(articles.deletedAt)))
+        .returning({ id: articles.id });
       if (!deleted) {
         return reply.code(404).send({ error: "Not found" });
       }

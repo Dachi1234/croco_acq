@@ -1,9 +1,10 @@
 import { db } from "../db/index.js";
 import { promotions } from "../db/schema.js";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, isNull } from "drizzle-orm";
 import {
   createPromotionSchema,
   updatePromotionSchema,
+  LOCALES,
   type CreatePromotion,
   type UpdatePromotion,
 } from "@acquisition/shared";
@@ -104,9 +105,17 @@ function parseOptionalStatus(
 }
 
 export async function promotionsRoutes(app: FastifyInstance) {
-  app.get("/", async (request) => {
+  app.get("/", async (request, reply) => {
     const { locale, status } = request.query as { locale?: string; status?: string };
-    const conditions = [];
+
+    if (locale && !(LOCALES as readonly string[]).includes(locale)) {
+      return reply.code(400).send({ error: `Invalid locale. Allowed: ${LOCALES.join(", ")}` });
+    }
+    if (status && !["draft", "published", "all"].includes(status)) {
+      return reply.code(400).send({ error: "Invalid status. Allowed: draft, published, all" });
+    }
+
+    const conditions = [isNull(promotions.deletedAt)];
     if (status !== "all") {
       conditions.push(eq(promotions.status, status === "draft" ? "draft" : "published"));
     }
@@ -137,11 +146,11 @@ export async function promotionsRoutes(app: FastifyInstance) {
 
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(id);
     const [row] = isUuid
-      ? await db.select().from(promotions).where(eq(promotions.id, id))
+      ? await db.select().from(promotions).where(and(eq(promotions.id, id), isNull(promotions.deletedAt)))
       : await db
           .select()
           .from(promotions)
-          .where(and(eq(promotions.slug, id), eq(promotions.locale, locale)));
+          .where(and(eq(promotions.slug, id), eq(promotions.locale, locale), isNull(promotions.deletedAt)));
 
     if (!row) {
       return reply.code(404).send({ error: "Not found" });
@@ -214,8 +223,9 @@ export async function promotionsRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const [deleted] = await db
-        .delete(promotions)
-        .where(eq(promotions.id, id))
+        .update(promotions)
+        .set({ deletedAt: new Date() })
+        .where(and(eq(promotions.id, id), isNull(promotions.deletedAt)))
         .returning({ id: promotions.id });
       if (!deleted) {
         return reply.code(404).send({ error: "Not found" });

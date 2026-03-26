@@ -6,8 +6,12 @@ export async function revalidatePath(path: string): Promise<boolean> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 5000);
     const res = await fetch(
-      `${BLOG_URL}/api/revalidate?secret=${REVALIDATE_SECRET}&path=${encodeURIComponent(path)}`,
-      { signal: controller.signal },
+      `${BLOG_URL}/api/revalidate?path=${encodeURIComponent(path)}`,
+      {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${REVALIDATE_SECRET}` },
+        signal: controller.signal,
+      },
     );
     clearTimeout(timer);
     return res.ok;
