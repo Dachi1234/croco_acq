@@ -1,9 +1,9 @@
 import type { TextBlock as TextBlockData } from "@acquisition/shared";
-import DOMPurify from "isomorphic-dompurify";
+import sanitizeHtml from "sanitize-html";
 
 export function TextBlock({ block, position }: { block: TextBlockData; position: number }) {
-  const clean = DOMPurify.sanitize(block.content, {
-    ALLOWED_TAGS: [
+  const clean = sanitizeHtml(block.content, {
+    allowedTags: [
       "h1", "h2", "h3", "h4", "h5", "h6",
       "p", "br", "hr",
       "ul", "ol", "li",
@@ -12,11 +12,11 @@ export function TextBlock({ block, position }: { block: TextBlockData; position:
       "table", "thead", "tbody", "tr", "th", "td",
       "img",
     ],
-    ALLOWED_ATTR: [
-      "href", "target", "rel",
-      "src", "alt", "width", "height",
-      "class", "id",
-    ],
+    allowedAttributes: {
+      a: ["href", "target", "rel"],
+      img: ["src", "alt", "width", "height"],
+      "*": ["class", "id"],
+    },
   });
 
   return (
