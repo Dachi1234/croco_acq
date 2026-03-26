@@ -7,7 +7,6 @@ import type { Locale } from "@/lib/i18n";
 import { t, LOCALES } from "@/lib/i18n";
 import { fetchPromotion, fetchPromotions } from "@/lib/api";
 import { BlockRenderer } from "@/components/blocks";
-import { PromotionCard } from "@/components/cards";
 
 interface PageProps {
   params: Promise<{ locale: string; slug: string }>;
@@ -55,52 +54,91 @@ export default async function PromotionDetailPage({ params }: PageProps) {
     .slice(0, 6);
 
   return (
-    <div className="mx-auto max-w-[1056px] px-4 py-8">
-      <nav className="mb-6 flex items-center gap-2 text-sm text-gray-500">
-        <Link
-          href={`/${validLocale}/promotions`}
-          className="transition-colors hover:text-white"
-        >
+    <div className="mx-auto max-w-[1056px] px-4 py-[48px]">
+      {/* Breadcrumb */}
+      <nav className="mb-[24px] flex items-center gap-[8px] text-[12px] text-[#83969c]">
+        <Link href={`/${validLocale}/promotions`} className="transition-colors hover:text-white">
           {t(validLocale, "promotions")}
         </Link>
         <span>/</span>
-        <span className="truncate text-gray-400">{promotion.title}</span>
+        <span className="truncate text-white">{promotion.title}</span>
       </nav>
 
-      <h1 className="mb-8 text-center text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
+      {/* Title */}
+      <h1 className="mb-[24px] text-[28px] font-medium leading-tight text-white sm:text-[32px] lg:text-[36px]">
         {promotion.title}
       </h1>
 
+      {/* Cover image */}
       {promotion.cover_image && (
-        <div className="relative mb-10 aspect-video w-full overflow-hidden rounded-xl">
+        <div className="relative mb-[32px] aspect-video w-full overflow-hidden rounded-[16px]">
           <Image
             src={promotion.cover_image}
             alt={promotion.title}
             fill
             priority
-            className="object-cover"
+            className="object-contain"
           />
         </div>
       )}
 
+      {/* Content blocks */}
       {promotion.blocks && promotion.blocks.length > 0 && (
-        <div className="mx-auto max-w-[800px]">
-          <BlockRenderer blocks={promotion.blocks} />
+        <div className="mb-[32px]">
+          <BlockRenderer blocks={promotion.blocks} locale={validLocale} />
         </div>
       )}
 
+      {/* Related promotions — compact thumbnail grid */}
       {related.length > 0 && (
-        <section className="mt-16">
-          <h2 className="mb-6 text-xl font-bold text-white">
-            {t(validLocale, "other_promotions")}
-          </h2>
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <section className="border-t border-[#072c38] pt-[32px]">
+          <div className="mb-[16px] flex items-center justify-between">
+            <h2 className="text-[16px] font-medium leading-[21px] text-white">
+              {t(validLocale, "other_promotions")}
+            </h2>
+            <Link
+              href={`/${validLocale}/promotions`}
+              className="flex items-center gap-[4px] text-[14px] leading-[15px] text-[#0092c0]"
+            >
+              {t(validLocale, "view_all")}
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+                <path d="M3.333 8h9.334M9.333 4.667 12.667 8l-3.334 3.333" stroke="#0092c0" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 gap-[16px] sm:grid-cols-2 lg:grid-cols-3">
             {related.map((p: any) => (
-              <PromotionCard
+              <Link
                 key={p.slug}
-                promotion={p}
-                locale={validLocale}
-              />
+                href={`/${validLocale}/promotions/${p.slug}`}
+                className="flex items-start gap-[12px] rounded-[12px] border border-[#072c38] bg-[#001e28] p-3 transition-colors hover:border-[#26c159]"
+              >
+                {/* Thumbnail */}
+                <div className="relative h-[64px] w-[114px] shrink-0 overflow-hidden rounded-[8px] bg-[#0a2a36]">
+                  {p.cover_image && (
+                    <Image
+                      src={p.cover_image}
+                      alt={p.title || ""}
+                      fill
+                      className="object-contain"
+                      sizes="114px"
+                    />
+                  )}
+                </div>
+                {/* Title + link */}
+                <div className="flex min-w-0 flex-1 flex-col justify-center gap-[4px]">
+                  <p className="line-clamp-2 text-[12px] font-medium leading-[16.8px] text-white">
+                    {p.title}
+                  </p>
+                  <span className="flex items-center gap-[4px] text-[10px] text-[#0092c0]">
+                    {t(validLocale, "view_full")}
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+                      <path d="M2.5 6h7M6.5 3.5 9 6l-2.5 2.5" stroke="#0092c0" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                </div>
+              </Link>
             ))}
           </div>
         </section>

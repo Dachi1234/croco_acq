@@ -8,13 +8,6 @@ function pickCover(article: any): string | null {
   return typeof a === "string" && a.length > 0 ? a : null;
 }
 
-function pickPublishedAt(article: any): string | null {
-  const a = article.published_at ?? article.publishedAt;
-  if (typeof a === "string" && a.length > 0) return a;
-  if (a instanceof Date) return a.toISOString();
-  return null;
-}
-
 function pickSlugTitle(article: any): { slug: string; title: string } {
   const slug = typeof article.slug === "string" ? article.slug : "";
   const title = typeof article.title === "string" ? article.title : "";
@@ -24,54 +17,44 @@ function pickSlugTitle(article: any): { slug: string; title: string } {
 export function ArticleCard({ article, locale }: { article: any; locale: Locale }) {
   const { slug, title } = pickSlugTitle(article);
   const cover = pickCover(article);
-  const publishedRaw = pickPublishedAt(article);
   const excerpt =
     typeof article.excerpt === "string" && article.excerpt.length > 0 ? article.excerpt : null;
-
-  const dateLabel = publishedRaw
-    ? new Date(publishedRaw).toLocaleDateString(locale === "ka" ? "ka-GE" : "en-US", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
-    : null;
 
   const href = `/${locale}/blog/${slug}`;
 
   return (
     <Link
       href={href}
-      className="group block overflow-hidden rounded-xl border border-[#072c38] bg-[#00131a] transition-colors hover:border-[#189541]"
+      className="flex h-full flex-col overflow-hidden rounded-[20px] border border-[#072c38] bg-[#001e28] shadow-[0px_4px_30px_0px_rgba(0,0,0,0.16)]"
     >
-      <div className="relative h-[184px] w-full overflow-hidden">
-        {cover ? (
-          <Image
-            src={cover}
-            alt={title || "Article"}
-            fill
-            className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-            sizes="(max-width: 768px) 100vw, 400px"
-          />
-        ) : (
-          <div className="h-full w-full bg-[#0a2a36]" />
-        )}
-        {dateLabel ? (
-          <span className="absolute right-3 top-3 rounded-md bg-[#00131a]/90 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm">
-            {dateLabel}
-          </span>
-        ) : null}
+      <div className="relative h-[142px] w-full shrink-0 overflow-hidden">
+          {cover ? (
+            <Image
+              src={cover}
+              alt={title || "Article"}
+              fill
+              className="object-contain"
+              sizes="(max-width: 768px) 100vw, 300px"
+            />
+          ) : (
+            <div className="h-full w-full bg-[#0a2a36]" />
+          )}
       </div>
 
-      <div className="p-4">
-        <h2 className="text-lg font-semibold leading-snug text-white group-hover:text-[#26c159]">{title}</h2>
-        {excerpt ? (
-          <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-gray-400">{excerpt}</p>
-        ) : null}
-        <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#26c159] transition-colors group-hover:text-[#189541]">
+      <div className="flex flex-1 flex-col gap-[12px] p-[20px]">
+        <div className="flex flex-1 flex-col gap-[12px]">
+          <h2 className="text-[14px] font-medium leading-[19.6px] text-white">{title}</h2>
+          {excerpt ? (
+            <p className="overflow-hidden text-ellipsis text-[12px] leading-[19.2px] text-[#83969c]">
+              {excerpt}
+            </p>
+          ) : null}
+        </div>
+        <span className="flex items-center gap-[4px] text-[12px] font-medium text-[#0092c0]">
           {t(locale, "read_more")}
-          <span aria-hidden className="translate-x-0 transition-transform group-hover:translate-x-0.5">
-            →
-          </span>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+            <path d="M2.917 7h8.166M7.583 4.083 10.5 7l-2.917 2.917" stroke="#0092c0" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </span>
       </div>
     </Link>

@@ -209,8 +209,11 @@ export async function articlesRoutes(app: FastifyInstance) {
         return reply.code(404).send({ error: "Not found" });
       }
 
-      if (transitioningToPublished) {
+      // Revalidate if published (new publish or content update)
+      if (updated.status === "published") {
         revalidatePath(`/${updated.locale}/blog/${updated.slug}`);
+        revalidatePath(`/${updated.locale}/blog`);
+        revalidatePath(`/${updated.locale}`);
       }
 
       return toApiFull(updated);
@@ -226,9 +229,14 @@ export async function articlesRoutes(app: FastifyInstance) {
         .update(articles)
         .set({ deletedAt: new Date() })
         .where(and(eq(articles.id, id), isNull(articles.deletedAt)))
-        .returning({ id: articles.id });
+        .returning();
       if (!deleted) {
         return reply.code(404).send({ error: "Not found" });
+      }
+      if (deleted.status === "published") {
+        revalidatePath(`/${deleted.locale}/blog/${deleted.slug}`);
+        revalidatePath(`/${deleted.locale}/blog`);
+        revalidatePath(`/${deleted.locale}`);
       }
       return { success: true };
     },

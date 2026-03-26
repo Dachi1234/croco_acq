@@ -91,85 +91,91 @@ export function MobileMenu(props: MobileMenuProps) {
       ) : null}
 
       {panelVisible ? (
-        <div
-          className={`fixed inset-0 z-50 flex flex-col bg-[#001a24] transition-[transform,opacity] duration-300 ease-out lg:hidden ${
-            panelEntered ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"
-          }`}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Menu"
-        >
-          <div className="flex h-14 shrink-0 items-center justify-between px-[16px]">
-            <Link
-              href={`/${locale}`}
-              onClick={() => setMenuOpen(false)}
-              className="flex items-center"
-              aria-label={t(locale, "home")}
-            >
-              <Image
-                src="/images/mobile-logo.svg"
-                alt=""
-                width={44}
-                height={24}
-                className="h-6 w-[44px]"
-                priority
-              />
-            </Link>
-            <button
-              type="button"
-              onClick={() => setMenuOpen(false)}
-              className="flex h-10 w-10 items-center justify-center text-white"
-              aria-label="Close menu"
-            >
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden
-              >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          </div>
+        <div className="lg:hidden">
+          {/* Backdrop */}
+          <div
+            className={`fixed inset-0 z-40 bg-black/60 transition-opacity duration-300 ${
+              panelEntered ? "opacity-100" : "opacity-0"
+            }`}
+            onClick={() => setMenuOpen(false)}
+            aria-hidden="true"
+          />
 
-          <nav className="flex flex-col gap-[8px] px-[24px] pt-[16px]">
-            {NAV_LINKS.map(({ key, path, icon: Icon }) => {
-              const active = linkActive(pathname, locale, path);
-              return (
+          {/* Panel — drops down from top */}
+          <div
+            className={`fixed left-0 right-0 top-0 z-50 transition-transform duration-300 ease-out ${
+              panelEntered ? "translate-y-0" : "-translate-y-full"
+            }`}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menu"
+          >
+            <div className="flex flex-col rounded-bl-[32px] rounded-br-[32px] border-b border-[#072c38] bg-[#001e28] shadow-[0px_12px_48px_0px_rgba(0,0,0,0.6)]">
+              {/* Top bar: logo + close */}
+              <div className="flex h-[56px] shrink-0 items-center justify-between px-[16px]">
                 <Link
-                  key={key}
-                  href={`/${locale}${path}`}
+                  href={`/${locale}`}
                   onClick={() => setMenuOpen(false)}
-                  className={
-                    active
-                      ? "flex items-center gap-[12px] rounded-[12px] border-l-[3px] border-[#189541] bg-[rgba(28,175,75,0.1)] py-[14px] px-[20px]"
-                      : "flex items-center gap-[12px] rounded-[12px] border-l-[3px] border-transparent py-[14px] px-[20px] text-white/[0.64]"
-                  }
+                  aria-label={t(locale, "home")}
                 >
-                  <Icon className={`h-5 w-5 shrink-0 ${active ? "text-[#189541]" : "text-current"}`} />
-                  <span
-                    className={`text-[16px] font-medium ${active ? "text-[#189541]" : ""}`}
-                  >
-                    {t(locale, key)}
-                  </span>
+                  <Image
+                    src="/images/mobile-logo.svg"
+                    alt=""
+                    width={44}
+                    height={24}
+                    className="h-6 w-[44px]"
+                    priority
+                  />
                 </Link>
-              );
-            })}
-          </nav>
+                <button
+                  type="button"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex size-[24px] items-center justify-center text-white"
+                  aria-label="Close menu"
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
 
-          <div className="mx-[24px] mt-[24px] w-[calc(100%-48px)]">
-            <a
-              href="#"
-              className="block w-full rounded-[200px] border border-[#26c159] bg-[#189541] py-[14px] text-center text-[16px] font-medium text-white"
-            >
-              {t(locale, "register")}
-            </a>
+              {/* Nav + register button */}
+              <div className="flex flex-col gap-[12px] border-t border-[#072c38] p-[16px]">
+                <div className="flex flex-col gap-[8px]">
+                  {NAV_LINKS.map(({ key, path, icon: Icon }) => {
+                    const active = linkActive(pathname, locale, path);
+                    return (
+                      <Link
+                        key={key}
+                        href={`/${locale}${path}`}
+                        onClick={() => setMenuOpen(false)}
+                        className={`flex w-full items-center gap-[8px] rounded-[8px] ${active ? "bg-[#072c38]" : ""}`}
+                      >
+                        {/* Left accent bar */}
+                        <div className="flex h-[20px] w-[2px] shrink-0 items-center justify-center">
+                          <div className={`h-[20px] w-[2px] rounded-full ${active ? "bg-[#1caf4b]" : "bg-transparent"}`} />
+                        </div>
+                        {/* Icon + label */}
+                        <div className={`flex h-[40px] items-center gap-[4px] ${active ? "" : "opacity-[0.64]"}`}>
+                          <Icon className="size-5 shrink-0 text-current" />
+                          <span className={`text-[14px] font-medium leading-[20px] ${active ? "text-[#26c159]" : "text-white"}`}>
+                            {t(locale, key)}
+                          </span>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+
+                <a
+                  href="#"
+                  className="flex w-full items-center justify-center gap-[6px] rounded-[200px] border border-[#26c159] bg-[#189541] px-[16px] py-[10px] text-[14px] font-medium leading-[20px] text-white transition-colors hover:bg-[#26c159]"
+                >
+                  {t(locale, "register")}
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       ) : null}

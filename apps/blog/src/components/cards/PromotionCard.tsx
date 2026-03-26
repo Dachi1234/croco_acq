@@ -23,37 +23,37 @@ export function PromotionCard({ promotion, locale }: { promotion: any; locale: L
   const href = `/${locale}/promotions/${slug}`;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-[#072c38] bg-[#00131a] transition-colors hover:border-[#189541]">
-      <Link href={href} className="group block">
-        <div className="relative h-[184px] w-full overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden rounded-[24px] border border-[#072c38] bg-[#001e28]">
+      <Link href={href} className="block shrink-0">
+        <div className="relative h-[192px] w-full overflow-hidden">
           {cover ? (
             <Image
               src={cover}
               alt={title || "Promotion"}
               fill
-              className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+              className="object-contain"
               sizes="(max-width: 768px) 100vw, 400px"
             />
           ) : (
             <div className="h-full w-full bg-[#0a2a36]" />
           )}
-          <span className="absolute right-3 top-3 rounded-full bg-[#189541] px-3 py-1 text-xs font-semibold text-white">
-            {t(locale, "promo")}
-          </span>
-        </div>
-
-        <div className="p-4">
-          <h2 className="text-lg font-semibold leading-snug text-white group-hover:text-[#26c159]">{title}</h2>
-          {excerpt ? (
-            <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-gray-400">{excerpt}</p>
-          ) : null}
+          <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,26,36,0.7)] via-transparent to-transparent" />
         </div>
       </Link>
 
-      <div className="px-4 pb-4">
+      <div className="flex flex-1 flex-col gap-[16px] p-[24px]">
+        <div className="flex flex-1 flex-col gap-[12px]">
+          <Link href={href}>
+            <h2 className="text-[14px] font-medium leading-[19.6px] text-white">{title}</h2>
+          </Link>
+          {excerpt ? (
+            <p className="text-[12px] leading-[19.2px] text-[#83969c]">{excerpt}</p>
+          ) : null}
+        </div>
+
         <Link
           href={href}
-          className="flex w-full items-center justify-center rounded-full bg-[#189541] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#26c159]"
+          className="flex w-full items-center justify-center rounded-[200px] border border-[#26c159] bg-[#189541] px-[16px] py-[10px] text-[14px] font-medium leading-[20px] text-white transition-colors hover:bg-[#26c159]"
         >
           {t(locale, "learn_more")}
         </Link>

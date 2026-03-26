@@ -209,8 +209,11 @@ export async function promotionsRoutes(app: FastifyInstance) {
         return reply.code(404).send({ error: "Not found" });
       }
 
-      if (transitioningToPublished) {
+      // Revalidate if published (new publish or content update)
+      if (updated.status === "published") {
         revalidatePath(`/${updated.locale}/promotions/${updated.slug}`);
+        revalidatePath(`/${updated.locale}/promotions`);
+        revalidatePath(`/${updated.locale}`);
       }
 
       return toApiFull(updated);
@@ -226,9 +229,14 @@ export async function promotionsRoutes(app: FastifyInstance) {
         .update(promotions)
         .set({ deletedAt: new Date() })
         .where(and(eq(promotions.id, id), isNull(promotions.deletedAt)))
-        .returning({ id: promotions.id });
+        .returning();
       if (!deleted) {
         return reply.code(404).send({ error: "Not found" });
+      }
+      if (deleted.status === "published") {
+        revalidatePath(`/${deleted.locale}/promotions/${deleted.slug}`);
+        revalidatePath(`/${deleted.locale}/promotions`);
+        revalidatePath(`/${deleted.locale}`);
       }
       return { success: true };
     },

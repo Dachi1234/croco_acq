@@ -75,7 +75,7 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
           <button
             onClick={prev}
             aria-label="Previous slide"
-            className="pointer-events-auto flex h-[40px] w-[40px] items-center justify-center rounded-[20px] border border-[rgba(255,255,255,0.1)] bg-[rgba(0,30,40,0.8)]"
+            className="pointer-events-auto flex h-[40px] w-[40px] items-center justify-center rounded-[20px] border border-[rgba(255,255,255,0.1)] bg-[rgba(0,30,40,0.8)] transition-colors hover:border-[rgba(255,255,255,0.3)] hover:bg-[rgba(0,50,70,0.95)]"
           >
             <svg
               width="18"
@@ -96,7 +96,7 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
           <button
             onClick={next}
             aria-label="Next slide"
-            className="pointer-events-auto flex h-[40px] w-[40px] items-center justify-center rounded-[20px] border border-[rgba(255,255,255,0.1)] bg-[rgba(0,30,40,0.8)]"
+            className="pointer-events-auto flex h-[40px] w-[40px] items-center justify-center rounded-[20px] border border-[rgba(255,255,255,0.1)] bg-[rgba(0,30,40,0.8)] transition-colors hover:border-[rgba(255,255,255,0.3)] hover:bg-[rgba(0,50,70,0.95)]"
           >
             <svg
               width="18"

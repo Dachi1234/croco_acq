@@ -37,10 +37,10 @@ export function HeaderDesktopNav({ locale }: { locale: Locale }) {
             <Link
               key={key}
               href={href}
-              className="flex flex-col items-center"
+              className="group flex flex-col items-center"
             >
               <span
-                className={`flex h-[32px] items-center gap-[6px] font-medium transition-opacity ${active ? "text-[#26c159] opacity-100" : "text-white opacity-[0.64]"}`}
+                className={`flex h-[32px] items-center gap-[6px] font-medium transition-opacity ${active ? "text-[#26c159] opacity-100" : "text-white opacity-[0.64] group-hover:opacity-100"}`}
               >
                 <Icon className="w-5 h-5 shrink-0" />
                 <span>{t(locale, key)}</span>
@@ -57,7 +57,7 @@ export function HeaderDesktopNav({ locale }: { locale: Locale }) {
 
       <a
         href="#"
-        className="rounded-[200px] border border-[#26c159] bg-[#189541] px-[16px] py-[8px] text-[14px] font-medium text-white"
+        className="rounded-[200px] border border-[#26c159] bg-[#189541] px-[16px] py-[8px] text-[14px] font-medium text-white transition-colors hover:bg-[#26c159]"
       >
         {t(locale, "register")}
       </a>

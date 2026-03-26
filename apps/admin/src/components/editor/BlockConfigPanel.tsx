@@ -9,6 +9,7 @@ import type {
 } from "@acquisition/shared";
 import type { LucideIcon } from "lucide-react";
 import { ImageUploader } from "@/components/common/ImageUploader";
+import { TextBlockConfig } from "./blocks/TextBlockConfig";
 
 const inputClassName =
   "bg-[#0a2a36] border border-[#072c38] text-white rounded-lg px-3 py-2 w-full focus:border-[#189541] focus:outline-none";
@@ -63,26 +64,6 @@ export function BannerBlockConfig({
   );
 }
 
-export function TextBlockConfig({
-  block,
-  onChange,
-}: {
-  block: TextBlock;
-  onChange: (b: TextBlock) => void;
-}) {
-  return (
-    <div>
-      <SectionHeader icon={Type} label="Text Settings" />
-      <FieldLabel>Content (HTML)</FieldLabel>
-      <textarea
-        value={block.content}
-        onChange={(e) => onChange({ ...block, content: e.target.value })}
-        rows={12}
-        className={`${inputClassName} min-h-[200px] resize-y font-mono text-sm`}
-      />
-    </div>
-  );
-}
 
 function SideFields({
   label,

@@ -18,7 +18,7 @@ export default async function BlogPage({
         {t(validLocale, "blog")}
       </h1>
 
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 items-stretch gap-[16px] md:grid-cols-2 lg:grid-cols-4">
         {articles.map((article: any) => (
           <ArticleCard
             key={article.slug}
