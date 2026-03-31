@@ -1,5 +1,26 @@
+import type { Metadata } from "next";
 import type { Locale } from "@/lib/i18n";
-import { t } from "@/lib/i18n";
+import { t, LOCALES } from "@/lib/i18n";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const isKa = locale === "ka";
+  return {
+    title: isKa ? "კონფიდენციალურობის პოლიტიკა" : "Privacy Policy",
+    description: isKa
+      ? "Crocobet-ის კონფიდენციალურობის პოლიტიკა."
+      : "Crocobet Privacy Policy.",
+    alternates: {
+      canonical: `/${locale}/privacy`,
+      languages: Object.fromEntries(LOCALES.map((l) => [l, `/${l}/privacy`])),
+    },
+    robots: { index: false },
+  };
+}
 
 export default async function PrivacyPage({
   params,

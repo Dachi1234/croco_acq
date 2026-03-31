@@ -1,7 +1,34 @@
+import type { Metadata } from "next";
 import type { Locale } from "@/lib/i18n";
-import { t } from "@/lib/i18n";
+import { t, LOCALES } from "@/lib/i18n";
 import { fetchArticles } from "@/lib/api";
 import { ArticleCard } from "@/components/cards";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const isKa = locale === "ka";
+  return {
+    title: isKa ? "ბლოგი" : "Blog",
+    description: isKa
+      ? "Crocobet-ის ბლოგი — სიახლეები, გზამკვლევები და ინსაითები."
+      : "Crocobet Blog — news, guides and insights.",
+    alternates: {
+      canonical: `/${locale}/blog`,
+      languages: Object.fromEntries(LOCALES.map((l) => [l, `/${l}/blog`])),
+    },
+    openGraph: {
+      title: isKa ? "ბლოგი | Crocobet" : "Blog | Crocobet",
+      description: isKa
+        ? "სიახლეები, გზამკვლევები და ინსაითები Crocobet-იდან."
+        : "News, guides and insights from Crocobet.",
+      type: "website",
+    },
+  };
+}
 
 export default async function BlogPage({
   params,

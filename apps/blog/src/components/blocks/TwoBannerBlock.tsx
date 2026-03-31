@@ -39,7 +39,7 @@ export function TwoBannerBlock({
   position: number;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2" data-block-position={position}>
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2" data-block-position={position} data-block-type="two_banner">
       <BannerSide side={block.left} slot="left" />
       <BannerSide side={block.right} slot="right" />
     </div>

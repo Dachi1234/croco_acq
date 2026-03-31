@@ -17,7 +17,8 @@ export function articleJsonLd(params: {
     url: `${params.siteUrl}/${params.locale}/blog/${params.slug}`,
     publisher: {
       "@type": "Organization",
-      name: "DigiTeam",
+      name: "Crocobet",
+      url: params.siteUrl,
     },
   };
 }

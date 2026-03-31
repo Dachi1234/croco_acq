@@ -1,7 +1,34 @@
+import type { Metadata } from "next";
 import type { Locale } from "@/lib/i18n";
-import { t } from "@/lib/i18n";
+import { t, LOCALES } from "@/lib/i18n";
 import { fetchPromotions } from "@/lib/api";
 import { PromotionCard } from "@/components/cards";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const isKa = locale === "ka";
+  return {
+    title: isKa ? "აქციები" : "Promotions",
+    description: isKa
+      ? "Crocobet-ის ყველა აქცია — ექსკლუზიური შეთავაზებები და ბონუსები."
+      : "All Crocobet promotions — exclusive offers and bonuses.",
+    alternates: {
+      canonical: `/${locale}/promotions`,
+      languages: Object.fromEntries(LOCALES.map((l) => [l, `/${l}/promotions`])),
+    },
+    openGraph: {
+      title: isKa ? "აქციები | Crocobet" : "Promotions | Crocobet",
+      description: isKa
+        ? "ექსკლუზიური შეთავაზებები და ბონუსები Crocobet-იდან."
+        : "Exclusive offers and bonuses from Crocobet.",
+      type: "website",
+    },
+  };
+}
 
 export default async function PromotionsPage({
   params,

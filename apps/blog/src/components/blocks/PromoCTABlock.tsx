@@ -20,6 +20,7 @@ export function PromoCTABlock({ block, position }: Props) {
   return (
     <div
       data-block-position={position}
+      data-block-type="promo_cta"
       className={[
         "relative overflow-hidden rounded-[24px] border-[0.667px] border-[rgba(0,146,192,0.2)]",
         isCompact ? "p-[24px]" : "p-[40px]",
@@ -61,6 +62,8 @@ export function PromoCTABlock({ block, position }: Props) {
         <div className="flex items-start">
           <a
             href={block.button_link}
+            data-cta-label={block.button_text}
+            data-cta-dest={block.button_link}
             className="inline-flex items-center justify-center rounded-[200px] border border-[#26c159] bg-[#189541] px-[12px] py-[8px] text-[14px] font-medium text-white transition-colors hover:bg-[#26c159]"
             {...(isHttp ? { target: "_blank", rel: "noopener noreferrer" } : {})}
           >

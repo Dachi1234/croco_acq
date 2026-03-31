@@ -1,7 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 
 import type { Locale } from "@/lib/i18n";
+import { LOCALES } from "@/lib/i18n";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
 import {
   PromoIcon,
@@ -9,6 +11,37 @@ import {
   ArrowRightIcon,
 } from "@/components/icons/NavIcons";
 import { fetchHomepage, fetchPromotions, fetchArticles } from "@/lib/api";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const isKa = locale === "ka";
+
+  return {
+    title: isKa ? "მთავარი" : "Home",
+    description: isKa
+      ? "Crocobet — საქართველოს წამყვანი სათამაშო პლატფორმის სიახლეები, აქციები და სტატიები."
+      : "Crocobet — news, promotions and articles from Georgia's leading gaming platform.",
+    alternates: {
+      canonical: `/${locale}`,
+      languages: Object.fromEntries(
+        LOCALES.map((l) => [l, `/${l}`])
+      ),
+    },
+    openGraph: {
+      title: isKa ? "Crocobet — მთავარი" : "Crocobet — Home",
+      description: isKa
+        ? "საქართველოს წამყვანი სათამაშო პლატფორმის სიახლეები, აქციები და სტატიები."
+        : "News, promotions and articles from Georgia's leading gaming platform.",
+      locale: isKa ? "ka_GE" : "en_US",
+      alternateLocale: isKa ? "en_US" : "ka_GE",
+      type: "website",
+    },
+  };
+}
 
 export default async function HomePage({
   params,
@@ -78,6 +111,10 @@ export default async function HomePage({
 
   return (
     <div className="flex flex-col pt-[48px]">
+      <h1 className="sr-only">
+        {validLocale === "ka" ? "Crocobet — მთავარი გვერდი" : "Crocobet — Home"}
+      </h1>
+
       {/* Section 1: Hero Carousel */}
       <div className="mx-auto w-full max-w-[1056px] px-[16px] md:px-0">
         <HeroCarousel slides={heroSlides} />
@@ -88,12 +125,12 @@ export default async function HomePage({
         <section className="mx-auto mt-[48px] w-full max-w-[1056px]">
           <div className="flex flex-col gap-[24px]">
             <div className="flex items-center justify-between px-[16px] md:px-0">
-              <div className="flex items-center gap-[6px]">
+              <h2 className="flex items-center gap-[6px]">
                 <PromoIcon className="h-5 w-5 text-white" />
                 <span className="text-[16px] font-medium text-white">
                   {labels.promotions}
                 </span>
-              </div>
+              </h2>
               <Link
                 href={`/${validLocale}/promotions`}
                 className="flex items-center gap-[4px] text-[12px] text-[#0092c0]"
@@ -217,7 +254,7 @@ export default async function HomePage({
               <div className="relative size-[50px] shrink-0 overflow-hidden md:size-[64px] md:rounded-[8px]">
                 <Image
                   src="/images/cta-icon.png"
-                  alt=""
+                  alt={validLocale === "ka" ? "ბონუსის ხატი" : "Bonus icon"}
                   width={100}
                   height={73}
                   className="absolute left-[-28.13%] top-[-6.87%] h-[113.91%] w-[156.25%] max-w-none"
@@ -246,12 +283,12 @@ export default async function HomePage({
         <section className="mx-auto mt-[48px] w-full max-w-[1056px] pb-[32px]">
           <div className="flex flex-col gap-[24px]">
             <div className="flex items-center justify-between px-[16px] md:px-0">
-              <div className="flex items-center gap-[6px]">
+              <h2 className="flex items-center gap-[6px]">
                 <BlogIcon className="h-5 w-5 text-white" />
                 <span className="text-[16px] font-medium text-white">
                   {labels.blog}
                 </span>
-              </div>
+              </h2>
               <Link
                 href={`/${validLocale}/blog`}
                 className="flex items-center gap-[4px] text-[12px] text-[#0092c0]"

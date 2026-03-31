@@ -30,6 +30,7 @@ export function TextBlock({ block, position }: { block: TextBlockData; position:
   return (
     <div
       data-block-position={position}
+      data-block-type="text"
       className={[
         "max-w-none",
         // paragraphs

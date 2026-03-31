@@ -1,5 +1,26 @@
+import type { Metadata } from "next";
 import type { Locale } from "@/lib/i18n";
-import { t } from "@/lib/i18n";
+import { t, LOCALES } from "@/lib/i18n";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const isKa = locale === "ka";
+  return {
+    title: isKa ? "წესები და პირობები" : "Terms & Conditions",
+    description: isKa
+      ? "Crocobet-ის მომსახურების წესები და პირობები."
+      : "Crocobet Terms & Conditions.",
+    alternates: {
+      canonical: `/${locale}/terms`,
+      languages: Object.fromEntries(LOCALES.map((l) => [l, `/${l}/terms`])),
+    },
+    robots: { index: false },
+  };
+}
 
 export default async function TermsPage({
   params,

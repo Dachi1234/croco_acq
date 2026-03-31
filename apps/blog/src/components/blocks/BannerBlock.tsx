@@ -16,11 +16,11 @@ export function BannerBlock({ block, position }: { block: BannerBlockData; posit
 
   if (block.link) {
     return (
-      <a href={block.link} className="block w-full" data-block-position={position}>
+      <a href={block.link} className="block w-full" data-block-position={position} data-block-type="banner">
         {inner}
       </a>
     );
   }
 
-  return <div data-block-position={position}>{inner}</div>;
+  return <div data-block-position={position} data-block-type="banner">{inner}</div>;
 }
