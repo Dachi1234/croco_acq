@@ -20,13 +20,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR || path.resolve(__dirname, "../../uploads"));
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-const PORT = Number(process.env.SERVER_PORT || 3001);
+
+const PORT = Number(process.env.ADMIN_PORT || 3004);
 
 const app = Fastify({ logger: true, trustProxy: true });
 
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
-  : ["http://localhost:3002", "http://localhost:3003"];
+  : ["http://localhost:3002"];
 
 await app.register(cors, {
   origin: ALLOWED_ORIGINS,
@@ -34,9 +35,7 @@ await app.register(cors, {
   methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
 });
 
-await app.register(rateLimit, {
-  global: false,
-});
+await app.register(rateLimit, { global: false });
 
 await app.register(multipart, {
   limits: { fileSize: 10 * 1024 * 1024 },
@@ -69,11 +68,11 @@ await app.register(settingsAdminRoutes, { prefix: "/api/settings" });
 await app.register(uploadsRoutes, { prefix: "/api/uploads" });
 await app.register(revalidateRoutes, { prefix: "/api/revalidate" });
 
-app.get("/api/health", async () => ({ status: "ok", mode: "combined" }));
+app.get("/api/health", async () => ({ status: "ok", mode: "admin" }));
 
 try {
   await app.listen({ port: PORT, host: "0.0.0.0" });
-  console.log(`Server running on port ${PORT} (combined mode)`);
+  console.log(`Admin API server running on port ${PORT}`);
 } catch (err) {
   app.log.error(err);
   process.exit(1);

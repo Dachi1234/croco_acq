@@ -3,7 +3,7 @@ import fs from "fs/promises";
 import { nanoid } from "nanoid";
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR || "./uploads";
-const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:3001";
+const PUBLIC_URL = process.env.PUBLIC_URL || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3001";
 
 export async function saveFile(
   buffer: Buffer,

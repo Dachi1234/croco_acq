@@ -1,0 +1,40 @@
+FROM node:22-alpine AS base
+RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+WORKDIR /app
+
+# --- Install all deps ---
+FROM base AS deps
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json tsconfig.base.json ./
+COPY server/package.json server/
+COPY packages/shared/package.json packages/shared/
+RUN pnpm install --frozen-lockfile
+
+# --- Build shared + server ---
+FROM deps AS build
+COPY packages/shared packages/shared
+COPY server server
+RUN pnpm --filter @acquisition/shared build
+RUN pnpm --filter @acquisition/server build
+
+# --- Runtime ---
+FROM node:22-alpine
+WORKDIR /app
+
+ARG ENTRY=index.js
+ENV ENTRY=${ENTRY} \
+    NODE_ENV=production \
+    UPLOAD_DIR=/data/uploads
+
+RUN mkdir -p /data/uploads
+
+# Copy compiled server output
+COPY --from=build /app/server/dist ./dist
+# Copy production node_modules (server deps resolved in workspace context)
+COPY --from=build /app/node_modules ./node_modules
+# Copy compiled shared package so the import resolves at runtime
+COPY --from=build /app/packages/shared/dist ./node_modules/@acquisition/shared/dist
+COPY --from=build /app/packages/shared/package.json ./node_modules/@acquisition/shared/package.json
+
+EXPOSE 3003 3004
+
+CMD node dist/${ENTRY}

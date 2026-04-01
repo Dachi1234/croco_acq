@@ -1,0 +1,108 @@
+variables:
+  REGISTRY: registry.gitlab.crocobet.com/crocosquad1/crocobet-offers
+  DOCKER_DRIVER: overlay2
+
+stages:
+  - build
+  - deploy
+
+# ── BUILD STAGE ──────────────────────────────────────────────
+.build_base:
+  stage: build
+  image: docker:26
+  services:
+    - docker:26-dind
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  only:
+    - main
+
+build_public_api:
+  extends: .build_base
+  script:
+    - docker build
+        --build-arg ENTRY=index-public.js
+        -f docker/Dockerfile.server
+        -t $REGISTRY/public-api:$CI_COMMIT_SHORT_SHA
+        -t $REGISTRY/public-api:latest
+        .
+    - docker push $REGISTRY/public-api:$CI_COMMIT_SHORT_SHA
+    - docker push $REGISTRY/public-api:latest
+
+build_admin_api:
+  extends: .build_base
+  script:
+    - docker build
+        --build-arg ENTRY=index-admin.js
+        -f docker/Dockerfile.server
+        -t $REGISTRY/admin-api:$CI_COMMIT_SHORT_SHA
+        -t $REGISTRY/admin-api:latest
+        .
+    - docker push $REGISTRY/admin-api:$CI_COMMIT_SHORT_SHA
+    - docker push $REGISTRY/admin-api:latest
+
+build_blog:
+  extends: .build_base
+  script:
+    - docker build
+        --build-arg NEXT_PUBLIC_API_URL=https://offers.crocobet.com
+        --build-arg NEXT_PUBLIC_SITE_URL=https://offers.crocobet.com
+        --build-arg NEXT_PUBLIC_GTM_ID=$NEXT_PUBLIC_GTM_ID
+        -f docker/Dockerfile.blog
+        -t $REGISTRY/blog:$CI_COMMIT_SHORT_SHA
+        -t $REGISTRY/blog:latest
+        .
+    - docker push $REGISTRY/blog:$CI_COMMIT_SHORT_SHA
+    - docker push $REGISTRY/blog:latest
+
+build_admin:
+  extends: .build_base
+  script:
+    - docker build
+        --build-arg VITE_API_URL=https://admin-offers.crocobet.com/api
+        -f docker/Dockerfile.admin
+        -t $REGISTRY/admin:$CI_COMMIT_SHORT_SHA
+        -t $REGISTRY/admin:latest
+        .
+    - docker push $REGISTRY/admin:$CI_COMMIT_SHORT_SHA
+    - docker push $REGISTRY/admin:latest
+
+# ── DEPLOY STAGE ─────────────────────────────────────────────
+.deploy_base:
+  stage: deploy
+  image: alpine:3.19
+  before_script:
+    - apk add --no-cache openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$DEPLOY_SSH_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - ssh-keyscan -H $MACHINE1_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
+    - ssh-keyscan -H $MACHINE2_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
+  only:
+    - main
+
+deploy_machine1:
+  extends: .deploy_base
+  script:
+    - ssh deploy@$MACHINE1_HOST "
+        echo '$CI_REGISTRY_PASSWORD' | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY &&
+        TAG=$CI_COMMIT_SHORT_SHA docker compose -f ~/crocobet-offers/docker/docker-compose.blog.yml pull &&
+        TAG=$CI_COMMIT_SHORT_SHA docker compose -f ~/crocobet-offers/docker/docker-compose.blog.yml up -d --remove-orphans
+      "
+  needs: [build_public_api, build_blog]
+  environment:
+    name: production/machine1
+    url: https://offers.crocobet.com
+
+deploy_machine2:
+  extends: .deploy_base
+  script:
+    - ssh deploy@$MACHINE2_HOST "
+        echo '$CI_REGISTRY_PASSWORD' | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY &&
+        TAG=$CI_COMMIT_SHORT_SHA docker compose -f ~/crocobet-offers/docker/docker-compose.admin.yml pull &&
+        TAG=$CI_COMMIT_SHORT_SHA docker compose -f ~/crocobet-offers/docker/docker-compose.admin.yml up -d --remove-orphans
+      "
+  needs: [build_admin_api, build_admin]
+  environment:
+    name: production/machine2
+    url: https://admin-offers.crocobet.com

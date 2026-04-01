@@ -1,0 +1,48 @@
+## Machine 2 — Internal / VPN only
+## Hosts: admin-offers.crocobet.com (admin panel + admin API)
+## Run: docker compose -f docker/docker-compose.admin.yml up -d
+
+services:
+  admin-api:
+    image: ${REGISTRY:-registry.gitlab.crocobet.com/crocosquad1/crocobet-offers}/admin-api:${TAG:-latest}
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.server
+      args:
+        ENTRY: index-admin.js
+    restart: unless-stopped
+    env_file: .env.machine2
+    environment:
+      ADMIN_PORT: "3004"
+      UPLOAD_DIR: /data/uploads
+      ALLOWED_ORIGINS: https://admin-offers.crocobet.com
+      NEXT_PUBLIC_SITE_URL: https://offers.crocobet.com
+      BETTER_AUTH_URL: https://admin-offers.crocobet.com
+      # Upload URLs will point to the public site (where files are served)
+      PUBLIC_URL: https://offers.crocobet.com
+    volumes:
+      - uploads:/data/uploads
+    ports:
+      - "127.0.0.1:3004:3004"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3004/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  admin:
+    image: ${REGISTRY:-registry.gitlab.crocobet.com/crocosquad1/crocobet-offers}/admin:${TAG:-latest}
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.admin
+      args:
+        VITE_API_URL: https://admin-offers.crocobet.com/api
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3002:80"
+    depends_on:
+      admin-api:
+        condition: service_healthy
+
+volumes:
+  uploads:

@@ -21,12 +21,24 @@ function formatSettingsRow(row: typeof siteSettings.$inferSelect) {
   };
 }
 
-export async function settingsRoutes(app: FastifyInstance) {
+/** Public API: read-only safe subset of settings (no auth) */
+export async function settingsPublicRoutes(app: FastifyInstance) {
+  app.get("/", async () => {
+    const [row] = await db.select().from(siteSettings).limit(1);
+    if (!row) return {};
+    return {
+      registration_url: row.registrationUrl,
+      site_name: row.siteName,
+      default_og_image: row.defaultOgImage,
+    };
+  });
+}
+
+/** Admin API: full settings read/write with auth */
+export async function settingsAdminRoutes(app: FastifyInstance) {
   app.get("/", { preHandler: requireAuth }, async () => {
     const [row] = await db.select().from(siteSettings).limit(1);
-    if (!row) {
-      return {};
-    }
+    if (!row) return {};
     return formatSettingsRow(row);
   });
 
@@ -42,35 +54,22 @@ export async function settingsRoutes(app: FastifyInstance) {
     if (existing) {
       const next = {
         registrationUrl:
-          body.registration_url !== undefined
-            ? body.registration_url
-            : existing.registrationUrl,
+          body.registration_url !== undefined ? body.registration_url : existing.registrationUrl,
         siteName: body.site_name !== undefined ? body.site_name : existing.siteName,
         defaultOgImage:
-          body.default_og_image !== undefined
-            ? body.default_og_image
-            : existing.defaultOgImage,
+          body.default_og_image !== undefined ? body.default_og_image : existing.defaultOgImage,
         updatedAt: new Date(),
       };
-
-      const [row] = await db
-        .update(siteSettings)
-        .set(next)
-        .where(eq(siteSettings.id, existing.id))
-        .returning();
-
+      const [row] = await db.update(siteSettings).set(next)
+        .where(eq(siteSettings.id, existing.id)).returning();
       return formatSettingsRow(row);
     }
 
-    const [row] = await db
-      .insert(siteSettings)
-      .values({
-        registrationUrl: body.registration_url ?? null,
-        siteName: body.site_name ?? null,
-        defaultOgImage: body.default_og_image ?? null,
-      })
-      .returning();
-
+    const [row] = await db.insert(siteSettings).values({
+      registrationUrl: body.registration_url ?? null,
+      siteName: body.site_name ?? null,
+      defaultOgImage: body.default_og_image ?? null,
+    }).returning();
     return formatSettingsRow(row);
   });
 }

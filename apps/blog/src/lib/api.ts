@@ -1,4 +1,6 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+// API_INTERNAL_URL is a runtime server-only env var (not inlined by Next.js).
+// NEXT_PUBLIC_API_URL is baked at build time — used as fallback for compatibility.
+const API_URL = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export async function fetchApi<T>(path: string, fallback?: T): Promise<T> {
   try {

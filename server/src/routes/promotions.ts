@@ -104,7 +104,56 @@ function parseOptionalStatus(
   return { ok: false };
 }
 
-export async function promotionsRoutes(app: FastifyInstance) {
+const LIST_FIELDS = {
+  id: promotions.id,
+  slug: promotions.slug,
+  locale: promotions.locale,
+  title: promotions.title,
+  excerpt: promotions.excerpt,
+  coverImage: promotions.coverImage,
+  status: promotions.status,
+  publishedAt: promotions.publishedAt,
+  metaTitle: promotions.metaTitle,
+};
+
+/** Public API: read-only, enforces published status */
+export async function promotionsPublicRoutes(app: FastifyInstance) {
+  app.get("/", async (request, reply) => {
+    const { locale } = request.query as { locale?: string };
+
+    if (locale && !(LOCALES as readonly string[]).includes(locale)) {
+      return reply.code(400).send({ error: `Invalid locale. Allowed: ${LOCALES.join(", ")}` });
+    }
+
+    const conditions = [isNull(promotions.deletedAt), eq(promotions.status, "published")];
+    if (locale !== undefined && locale !== "") {
+      conditions.push(eq(promotions.locale, locale));
+    }
+    const rows = await db.select(LIST_FIELDS).from(promotions)
+      .where(and(...conditions))
+      .orderBy(desc(promotions.publishedAt));
+    return rows.map(toListItem);
+  });
+
+  app.get("/:id", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const locale = (request.query as { locale?: string }).locale ?? "ka";
+
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(id);
+    const conditions = isUuid
+      ? [eq(promotions.id, id)]
+      : [eq(promotions.slug, id), eq(promotions.locale, locale)];
+
+    const [row] = await db.select().from(promotions)
+      .where(and(...conditions, isNull(promotions.deletedAt), eq(promotions.status, "published")));
+
+    if (!row) return reply.code(404).send({ error: "Not found" });
+    return toApiFull(row);
+  });
+}
+
+/** Admin API: full CRUD, auth-guarded writes, unrestricted reads */
+export async function promotionsAdminRoutes(app: FastifyInstance) {
   app.get("/", async (request, reply) => {
     const { locale, status } = request.query as { locale?: string; status?: string };
 
@@ -122,19 +171,7 @@ export async function promotionsRoutes(app: FastifyInstance) {
     if (locale !== undefined && locale !== "") {
       conditions.push(eq(promotions.locale, locale));
     }
-    const rows = await db
-      .select({
-        id: promotions.id,
-        slug: promotions.slug,
-        locale: promotions.locale,
-        title: promotions.title,
-        excerpt: promotions.excerpt,
-        coverImage: promotions.coverImage,
-        status: promotions.status,
-        publishedAt: promotions.publishedAt,
-        metaTitle: promotions.metaTitle,
-      })
-      .from(promotions)
+    const rows = await db.select(LIST_FIELDS).from(promotions)
       .where(conditions.length ? and(...conditions) : undefined)
       .orderBy(desc(promotions.publishedAt));
     return rows.map(toListItem);
@@ -147,98 +184,69 @@ export async function promotionsRoutes(app: FastifyInstance) {
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(id);
     const [row] = isUuid
       ? await db.select().from(promotions).where(and(eq(promotions.id, id), isNull(promotions.deletedAt)))
-      : await db
-          .select()
-          .from(promotions)
+      : await db.select().from(promotions)
           .where(and(eq(promotions.slug, id), eq(promotions.locale, locale), isNull(promotions.deletedAt)));
 
-    if (!row) {
-      return reply.code(404).send({ error: "Not found" });
-    }
+    if (!row) return reply.code(404).send({ error: "Not found" });
     return toApiFull(row);
   });
 
-  app.post(
-    "/",
-    { preHandler: [requireAuth] },
-    async (request, reply) => {
-      const parsed = createPromotionSchema.safeParse(request.body);
-      if (!parsed.success) {
-        return reply.code(400).send({ error: "Validation failed", errors: parsed.error.flatten() });
-      }
-      const [created] = await db.insert(promotions).values(insertFromCreate(parsed.data)).returning();
-      return toApiFull(created);
-    },
-  );
+  app.post("/", { preHandler: [requireAuth] }, async (request, reply) => {
+    const parsed = createPromotionSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.code(400).send({ error: "Validation failed", errors: parsed.error.flatten() });
+    }
+    const [created] = await db.insert(promotions).values(insertFromCreate(parsed.data)).returning();
+    return toApiFull(created);
+  });
 
-  app.patch(
-    "/:id",
-    { preHandler: [requireAuth] },
-    async (request, reply) => {
-      const { id } = request.params as { id: string };
-      const parsed = updatePromotionSchema.safeParse(request.body);
-      if (!parsed.success) {
-        return reply.code(400).send({ error: "Validation failed", errors: parsed.error.flatten() });
-      }
-      const statusParsed = parseOptionalStatus(request.body);
-      if (!statusParsed.ok) {
-        return reply.code(400).send({ error: "Invalid status" });
-      }
+  app.patch("/:id", { preHandler: [requireAuth] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const parsed = updatePromotionSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.code(400).send({ error: "Validation failed", errors: parsed.error.flatten() });
+    }
+    const statusParsed = parseOptionalStatus(request.body);
+    if (!statusParsed.ok) {
+      return reply.code(400).send({ error: "Invalid status" });
+    }
 
-      const [existing] = await db.select().from(promotions).where(eq(promotions.id, id));
-      if (!existing) {
-        return reply.code(404).send({ error: "Not found" });
-      }
+    const [existing] = await db.select().from(promotions).where(and(eq(promotions.id, id), isNull(promotions.deletedAt)));
+    if (!existing) return reply.code(404).send({ error: "Not found" });
 
-      const patch = patchToColumns(parsed.data);
-      const transitioningToPublished =
-        statusParsed.status === "published" && existing.status !== "published";
+    const patch = patchToColumns(parsed.data);
+    const transitioningToPublished =
+      statusParsed.status === "published" && existing.status !== "published";
 
-      const [updated] = await db
-        .update(promotions)
-        .set({
-          ...patch,
-          ...(statusParsed.status !== undefined ? { status: statusParsed.status } : {}),
-          ...(transitioningToPublished ? { publishedAt: new Date() } : {}),
-          updatedAt: new Date(),
-        })
-        .where(eq(promotions.id, id))
-        .returning();
+    const [updated] = await db.update(promotions).set({
+      ...patch,
+      ...(statusParsed.status !== undefined ? { status: statusParsed.status } : {}),
+      ...(transitioningToPublished ? { publishedAt: new Date() } : {}),
+      updatedAt: new Date(),
+    }).where(eq(promotions.id, id)).returning();
 
-      if (!updated) {
-        return reply.code(404).send({ error: "Not found" });
-      }
+    if (!updated) return reply.code(404).send({ error: "Not found" });
 
-      // Revalidate if published (new publish or content update)
-      if (updated.status === "published") {
-        revalidatePath(`/${updated.locale}/promotions/${updated.slug}`);
-        revalidatePath(`/${updated.locale}/promotions`);
-        revalidatePath(`/${updated.locale}`);
-      }
+    if (updated.status === "published") {
+      revalidatePath(`/${updated.locale}/promotions/${updated.slug}`);
+      revalidatePath(`/${updated.locale}/promotions`);
+      revalidatePath(`/${updated.locale}`);
+    }
 
-      return toApiFull(updated);
-    },
-  );
+    return toApiFull(updated);
+  });
 
-  app.delete(
-    "/:id",
-    { preHandler: [requireAuth] },
-    async (request, reply) => {
-      const { id } = request.params as { id: string };
-      const [deleted] = await db
-        .update(promotions)
-        .set({ deletedAt: new Date() })
-        .where(and(eq(promotions.id, id), isNull(promotions.deletedAt)))
-        .returning();
-      if (!deleted) {
-        return reply.code(404).send({ error: "Not found" });
-      }
-      if (deleted.status === "published") {
-        revalidatePath(`/${deleted.locale}/promotions/${deleted.slug}`);
-        revalidatePath(`/${deleted.locale}/promotions`);
-        revalidatePath(`/${deleted.locale}`);
-      }
-      return { success: true };
-    },
-  );
+  app.delete("/:id", { preHandler: [requireAuth] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const [deleted] = await db.update(promotions).set({ deletedAt: new Date() })
+      .where(and(eq(promotions.id, id), isNull(promotions.deletedAt))).returning();
+    if (!deleted) return reply.code(404).send({ error: "Not found" });
+
+    if (deleted.status === "published") {
+      revalidatePath(`/${deleted.locale}/promotions/${deleted.slug}`);
+      revalidatePath(`/${deleted.locale}/promotions`);
+      revalidatePath(`/${deleted.locale}`);
+    }
+    return { success: true };
+  });
 }

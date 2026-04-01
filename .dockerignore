@@ -6,7 +6,6 @@ dist/
 uploads/
 .env
 .env.local
-docker/.env
-docker/.env.*
 *.log
 .DS_Store
+.git/
